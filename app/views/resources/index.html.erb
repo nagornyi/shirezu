@@ -1,0 +1,349 @@
+<h2>Shared resources dashboard</h2>
+<script type="text/javascript">
+function refreshData() {
+	$("#resources").trigger("reloadGrid");
+}
+setInterval('refreshData()', 120000);
+</script>
+
+<table id="resources" class="scroll"></table>
+<div id="resources_pager" class="scroll"></div>
+
+<div style="width: 785px; height: 25px; display: none;" class="ui-userdata ui-state-default" id="t_resources">
+<form class="filterform" style="display:inline;'" name="SearchForm">
+<table cellspacing="0" border="0" cellpading="0" class="filtertable">
+<tbody>
+<tr>
+<td><label for="flags"></label></td><td><input type="text" value="" id="sg_flags" name="flags" style="width: 30px;"></td>
+<td><label for="name"></label></td><td><input type="text" value="" id="sg_name" name="name" style="width: 138px;"></td>
+<td><label for="description"></label></td><td><input type="text" value="" id="sg_description" name="description" style="width: 138px;"></td>
+<td><label for="user_id"></label></td><td><input type="text" value="" id="sg_user_id" name="user_id" style="width: 138px;"></td>
+<td><label for="occupied_at"></label></td><td><input type="text" value="" id="sg_occupied_at" name="occupied_at" style="width: 138px;"></td>
+</tr>
+</tbody>
+</table>
+</form>
+</div>
+
+<p>
+
+<% if @current_user.role? :administrator or @current_user.role? :company_administrator %>
+<table>
+<tr>
+<td>
+<button class="ui-state-default" onclick="newResource()" id="addres_btn">New Resource</button>
+</td>
+</tr>
+</table>
+<% end %>
+
+<div class="contextMenu" id="MenuJqGrid_occupy" style="display:none">
+	<ul style="width: 200px">
+	<li id="occupy">
+	<span style="display:inline-block; width:18px"><img src="images/occupy.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Occupy</span>
+	</li>
+<% if @current_user.role? :administrator or @current_user.role? :company_administrator or @current_user.role? :global_administrator %>
+	<li id="edit" style="center">
+	<span style="display:inline-block; width:18px"><img src="images/edit.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Edit</span>
+	</li>
+	<li id="del">
+	<span style="display:inline-block; width:18px"><img src="images/cross.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Remove</span>
+	</li>
+<% end %>
+	</ul>
+</div>
+
+<div class="contextMenu" id="MenuJqGrid_release" style="display:none">
+	<ul style="width: 200px">
+	<li id="release">
+	<span style="display:inline-block; width:18px"><img src="images/release.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Release</span>
+	</li>
+	<li id="notify">
+	<span style="display:inline-block; width:18px"><img src="images/notify.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Notify</span>
+	</li>
+	<li id="email">
+	<span style="display:inline-block; width:18px"><img src="images/email.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Email</span>
+	</li>
+<% if @current_user.role? :administrator or @current_user.role? :company_administrator or @current_user.role? :global_administrator %>
+	<li id="edit" style="center">
+	<span style="display:inline-block; width:18px"><img src="images/edit.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Edit</span>
+	</li>
+	<li id="del">
+	<span style="display:inline-block; width:18px"><img src="images/cross.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Remove</span>
+	</li>
+<% end %>
+	</ul>
+</div>
+
+<script>
+var eventsMenu = { bindings: {
+		'occupy': function(t) {
+			submitResource("resources/post_data", "{'id':'"+ t.id +"','oper':'occupy'}", "#resources");
+		},
+		'release': function(t) {
+			submitResource("resources/post_data", "{'id':'"+ t.id +"','oper':'release'}", "#resources");
+		},
+		'notify': function(t) {
+			submitResource("resources/post_data", "{'oper':'notify','id':'" + t.id + "'}", "#resources");
+		},
+		'email': function(t) {
+			reqResource(t.id);
+		},
+		'edit': function(t) {
+			editResource(t.id);
+		},
+		'del': function(t) {
+			rmResource(t.id);
+		}
+	}
+};
+
+jQuery("#resources").jqGrid({
+url:'resources',
+datatype: "json",
+height: 250,
+<% if @current_user.role? :company_administrator %>
+colNames:['Id','Flags','Name', 'Description', 'Occupied By','Occupied At','Notification', 'Project'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'flags',index:'flags', width:45},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'},
+	{name:'user_id',index:'user_id'},
+	{name:'occupied_at',index:'occupied_at'},
+	{name:'notification',index:'notification', hidden: true},
+	{name:'project_id',index:'project_id'}
+],
+<% elsif @current_user.role? :global_administrator %>
+colNames:['Id','Flags','Name', 'Description', 'Occupied By','Occupied At','Notification', 'Project', 'Company'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'flags',index:'flags', width:45},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'},
+	{name:'user_id',index:'user_id'},
+	{name:'occupied_at',index:'occupied_at'},
+	{name:'notification',index:'notification', hidden: true},
+	{name:'project_id',index:'project_id'},
+	{name:'company_id',index:'company_id'}
+],
+<% else %>
+colNames:['Id','Flags','Name', 'Description', 'Occupied By','Occupied At','Notification'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'flags',index:'flags', width:45},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'},
+	{name:'user_id',index:'user_id'},
+	{name:'occupied_at',index:'occupied_at'},
+	{name:'notification',index:'notification', hidden: true}
+],
+<% end %>
+autowidth: true, rowNum:10, rowList:[10,20,30], pager: jQuery('#resources_pager'), sortname: 'name', viewrecords: true, sortorder: "asc",
+caption: "Resources",toolbar : [true,"top"],
+afterInsertRow: function(rowid, rowdata, rowelem) {
+	if (rowdata.user_id == '') {
+		jQuery("#resources").setCell(rowid,'user_id','NOBODY',{color:'green'}); 
+		$('#' + rowid).contextMenu('MenuJqGrid_occupy', eventsMenu, "#resources", rowid);
+	} else {
+		$('#' + rowid).contextMenu('MenuJqGrid_release', eventsMenu, "#resources", rowid);
+	}
+	var flg = rowdata.flags;
+	if (flg == 'ON') {
+		jQuery("#resources").setCell(rowid,'flags','',{color:'orange'}); 
+	} else if (flg == 'O') {
+		jQuery("#resources").setCell(rowid,'flags','',{color:'red'}); 
+	} else if (flg == 'F') {
+		jQuery("#resources").setCell(rowid,'flags','',{color:'green'}); 
+	}
+}
+});
+
+jQuery("#t_resources").height(30).hide().filterGrid("resources",{gridModel:true,gridToolbar:true});
+
+jQuery("#resources").navGrid('#resources_pager',{edit:false,add:false,del:false,search:false,refresh:true}).navButtonAdd("#resources_pager",{caption:"Search",title:"Toggle Search",onClickButton:function(){ 
+	if(jQuery("#t_resources").css("display")=="none") {
+		jQuery("#t_resources").css("display","");
+	} else {
+		jQuery("#t_resources").css("display","none");
+	}
+} 
+});
+
+function addResource() {
+	var resName = "";
+	var resDesc = "";
+	var resOcc = "";
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr>" + "<tr><td>Occupy now?&nbsp;<input type=\"checkbox\" id=\"resOcc\" name=\"resOcc\" value=\"" + resOcc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("resources/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','user_id':'" + f.resOcc + "','oper':'add'}", "#resources");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function addResourceAsAdmin(prjlist) {
+	var resName = "";
+	var resDesc = "";
+	var resOcc = "";
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr>" + "<tr><td>Project<\/td><\/tr><tr><td>"+prjlist+"<\/td>" + "<td>Occupy now?&nbsp;<input type=\"checkbox\" id=\"resOcc\" name=\"resOcc\" value=\"" + resOcc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("resources/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','project':'" + f.resPrj + "','user_id':'" + f.resOcc + "','oper':'add'}", "#resources");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		if(f.resPrj == "" && v == "Submit"){
+			document.getElementById("resPrj").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function newResource() {
+$.ajax({
+  type: "POST",
+  url: "resources/post_data",
+	data: "{'oper':'get_projects_list'}",
+  contentType: 'application/json', // format of request payload
+  dataType: 'json', // format of the response
+	success: function (request, status, error) {
+		var prjlist = jQuery.parseJSON(error.responseText)[1];
+		if(prjlist == "false") {
+			$.prompt("Please create at least one project in 'Projects' tab. Then you will be able to add new resources.");
+		} else if(prjlist == "true") {
+			addResource();
+		} else {
+			addResourceAsAdmin(prjlist);
+		}
+	},
+  });
+};
+
+function editResource(id) {
+	var resName = "";
+	var resDesc = "";
+
+	$("#resources tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			resName = $(this).find("td").eq(2).html();
+			resDesc = $(this).find("td").eq(3).html();
+		}
+	});
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("resources/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','oper':'edit','id':'" + id + "'}", "#resources");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function rmResource(id) {
+	var resName = "";
+
+	$("#resources tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			resName = $(this).find("td").eq(2).html();
+		}
+	});
+
+	var txt = "Are you sure you want to delete the resource \"" + resName + "\"?<br \/>The resource will be deleted permanently.";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Yes')
+		submitResource("resources/post_data", "{'oper':'del','id':'" + id + "'}", "#resources");
+	}
+
+	$.prompt(txt,{
+		callback: mycallbackform,
+		buttons: { Yes: 'Yes', No: 'No' }
+	});
+};
+
+function reqResource(id) {
+	var reqMsg = "";
+	var resOcc = "";
+	var reqName = "";
+
+	$("#resources tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			resName = $(this).find("td").eq(2).html();
+			resOcc = $(this).find("td").eq(4).html();
+		}
+	});
+
+	var txt = "<table><tr><td>Question to "+resOcc+" concerning a resource \""+resName+"\"<\/td><\/tr><tr><td><textarea rows=\"10\" style=\"width: 370px;\" id=\"reqMsg\" name=\"reqMsg\" value=\"" + reqMsg + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit') {
+		submitResource("resources/post_data", "{'id':'" + id + "','message':'" + f.reqMsg + "','oper':'email'}", "#resources");
+		}
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.reqMsg == "" && v == "Submit"){
+			document.getElementById("reqMsg").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+</script>
+

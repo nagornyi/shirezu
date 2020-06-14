@@ -1,0 +1,224 @@
+<h2>Projects</h2>
+<script type="text/javascript">
+function refreshData() {
+	$("#projects").trigger("reloadGrid");
+}
+setInterval('refreshData()', 120000);
+</script>
+
+<table id="projects"></table>
+<div id="projects_pager"></div>
+
+<div style="width: 785px; height: 25px; display: none;" class="ui-userdata ui-state-default" id="t_projects">
+<form class="filterform" style="display:inline;'" name="SearchForm">
+<table cellspacing="0" border="0" cellpading="0" class="filtertable">
+<tbody>
+<tr>
+<td><label for="name"></label></td><td><input type="text" value="" id="sg_name" name="name" style="width: 138px;"></td>
+<td><label for="description"></label></td><td><input type="text" value="" id="sg_description" name="description" style="width: 138px;"></td>
+</tr>
+</tbody>
+</table>
+</form>
+</div>
+
+<p>
+<% if @current_user.role? :company_administrator %>
+<table>
+<tr>
+<td>
+<button class="ui-state-default" onclick="addProject()" id="addprj_btn">New Project</button>
+</td>
+</tr>
+</table>
+<% end %>
+
+<div class="contextMenu" id="MenuJqGrid_user" style="display:none">
+	<ul style="width: 200px">
+	<li id="edit" style="center">
+	<span style="display:inline-block; width:18px"><img src="images/edit.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Edit</span>
+	</li>
+	<li id="del">
+	<span style="display:inline-block; width:18px"><img src="images/cross.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Remove</span>
+	</li>
+	<li id="user">
+	<span style="display:inline-block; width:18px"><img src="images/user.png"; width="18"/></span>
+	<span style="font-size:11px; font-family:Verdana">+ Admin</span>
+	</li>
+	<li id="user_oper">
+	<span style="display:inline-block; width:18px"><img src="images/user.png"; width="18"/></span>
+	<span style="font-size:11px; font-family:Verdana">+ Operator</span>
+	</li>
+	</ul>
+</div>
+
+<script type="text/javascript">
+var eventsMenu = { bindings: {
+		'edit': function(t) {
+			editProject(t.id);
+		},
+		'del': function(t) {
+			rmProject(t.id);
+		},
+		'user': function(t) {
+			inviteUser(t.id, "admin");
+		},
+		'user_oper': function(t) {
+			inviteUser(t.id, "oper");
+		}
+	}
+};
+
+jQuery("#projects").jqGrid({
+url:'projects',
+datatype: "json",
+height: 250,
+<% if @current_user.role? :global_administrator %>
+colNames:['Id','Name','Description', 'Company'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'},
+	{name:'company_id',index:'company_id'}
+],
+<% else %>
+colNames:['Id','Name','Description'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'}
+],
+<% end %>
+autowidth: true, rowNum:10, rowList:[10,20,30], pager: '#projects_pager', sortname: 'name', viewrecords: true, sortorder: "asc",
+caption: "Projects",toolbar : [true,"top"],
+afterInsertRow: function(rowid, rowdata, rowelem) {
+		$('#' + rowid).contextMenu('MenuJqGrid_user', eventsMenu, "#projects", rowid);
+}
+});
+
+jQuery("#t_projects").height(30).hide().filterGrid("projects",{gridModel:true,gridToolbar:true});
+
+jQuery("#projects").navGrid('#projects_pager',{edit:false,add:false,del:false,search:false,refresh:true}).navButtonAdd("#projects_pager",{caption:"Search",title:"Toggle Search",onClickButton:function(){ 
+	if(jQuery("#t_projects").css("display")=="none") {
+		jQuery("#t_projects").css("display","");
+	} else {
+		jQuery("#t_projects").css("display","none");
+	}
+}
+});
+
+function editProject(id) {
+	var resName = "";
+	var resDesc = "";
+
+	$("#projects tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			resName = $(this).find("td").eq(1).html();
+			resDesc = $(this).find("td").eq(2).html();
+		}
+	});
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("projects/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','oper':'edit','id':'" + id + "'}", "#projects");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function rmProject(id) {
+	var prjName = "";
+
+	$("#projects tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			prjName = $(this).find("td").eq(1).html();
+		}
+	});
+
+	var txt = "Are you sure you want to delete the project \"" + prjName + "\"?<br \/>The project will be deleted permanently.<br \/>All users of this project will be deleted.";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Yes')
+		submitResource("projects/post_data", "{'oper':'del','id':'" + id + "'}", "#projects");
+	}
+
+	$.prompt(txt,{
+		callback: mycallbackform,
+		buttons: { Yes: 'Yes', No: 'No' }
+	});
+};
+
+function addProject() {
+	var resName = "";
+	var resDesc = "";
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("projects/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','oper':'add'}", "#projects");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function inviteUser(id, role) {
+	var userEmail = "";
+
+	var txt = "<table><tr><td>Email<\/td><\/tr><tr><td><input type=\"text\" id=\"userEmail\" name=\"userEmail\"<\/td><\/tr><\/table>";
+
+	if(role == "admin") {
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("projects/post_data", "{'email':'" + f.userEmail + "','oper':'invite','id':'" + id + "'}", "#projects");
+	}
+	} else {
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("projects/post_data", "{'email':'" + f.userEmail + "','oper':'invite_operator','id':'" + id + "'}", "#projects");
+	}
+	}
+	function mysubmitfunc(v,m,f){
+		if(f.userEmail == "" && v == "Submit"){
+			document.getElementById("userEmail").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+</script>
+

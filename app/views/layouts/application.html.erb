@@ -1,0 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+<head>
+  <%= stylesheet_link_tag 'oxygen' %>
+  <%= javascript_include_tag :defaults %>
+  <%= csrf_meta_tag %>
+	<%= stylesheet_link_tag 'impromptu.css' %>
+	<%= javascript_include_tag 'jquery-impromptu.3.2.min' %>
+</head>
+<body>
+
+<%= yield %>
+<!--<p class="notice"><%= notice %></p>-->
+<!--<p class="alert"><%= alert %></p>-->
+
+</body>
+</html>
+

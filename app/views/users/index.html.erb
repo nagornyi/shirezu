@@ -1,0 +1,165 @@
+<h2>Users</h2>
+<script type="text/javascript">
+function refreshData() {
+	$("#users").trigger("reloadGrid");
+}
+setInterval('refreshData()', 120000);
+</script>
+
+<table id="users"></table>
+<div id="users_pager"></div>
+
+<div style="width: 785px; height: 25px; display: none;" class="ui-userdata ui-state-default" id="t_users">
+<form class="filterform" style="display:inline;'" name="SearchForm">
+<table cellspacing="0" border="0" cellpading="0" class="filtertable">
+<tbody>
+<tr>
+<td><label for="username"></label></td><td><input type="text" value="" id="sg_username" name="username" style="width: 138px;"></td>
+<td><label for="time_zone"></label></td><td><input type="text" value="" id="sg_time_zone" name="time_zone" style="width: 138px;"></td>
+</tr>
+</tbody>
+</table>
+</form>
+</div>
+
+<p>
+<% if @current_user.role? :administrator %>
+<table>
+<tr>
+<td>
+<button class="ui-state-default" onclick="inviteUser()" id="invusr_btn">Invite User</button>
+</td>
+</tr>
+</table>
+<% end %>
+
+<div class="contextMenu" id="MenuJqGrid_user" style="display:none">
+	<ul style="width: 200px">
+	<li id="edit" style="center">
+	<span style="display:inline-block; width:18px"><img src="images/edit.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Edit</span>
+	</li>
+	<li id="del">
+	<span style="display:inline-block; width:18px"><img src="images/cross.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Remove</span>
+	</li>
+	</ul>
+</div>
+
+<script type="text/javascript">
+var eventsMenu = { bindings: {
+		'edit': function(t) {
+			editUser(t.id);
+		},
+		'del': function(t) {
+			rmUser(t.id);
+			$("#users").trigger("reloadGrid");
+		}
+	}
+};
+
+jQuery("#users").jqGrid({
+url:'users',
+datatype: "json",
+height: 250,
+<% if @current_user.role? :company_administrator %>
+colNames:['Id','Username', 'Time Zone', 'Project', 'Company', 'Role'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'username',index:'username'},
+	{name:'time_zone',index:'time_zone'},
+	{name:'project_id',index:'project_id'},
+	{name:'company_id',index:'company_id', hidden: true},
+	{name:'role',index:'role'}
+],
+<% elsif @current_user.role? :global_administrator %>
+colNames:['Id','Username', 'Time Zone', 'Project', 'Company', 'Role'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'username',index:'username'},
+	{name:'time_zone',index:'time_zone'},
+	{name:'project_id',index:'project_id'},
+	{name:'company_id',index:'company_id'},
+	{name:'role',index:'role'}
+],
+<% else %>
+colNames:['Id','Username', 'Time Zone', 'Project', 'Company', 'Role'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'username',index:'username'},
+	{name:'time_zone',index:'time_zone'},
+	{name:'project_id',index:'project_id', hidden: true},
+	{name:'company_id',index:'company_id', hidden: true},
+	{name:'role',index:'role'}
+],
+<% end %>
+autowidth: true, rowNum:10, rowList:[10,20,30], pager: '#users_pager', sortname: 'username', viewrecords: true, sortorder: "asc",
+caption: "Users",toolbar : [true,"top"],
+afterInsertRow: function(rowid, rowdata, rowelem) {
+		$('#' + rowid).contextMenu('MenuJqGrid_user', eventsMenu, "#users", rowid);
+}
+});
+
+jQuery("#t_users").height(30).hide().filterGrid("users",{gridModel:true,gridToolbar:true});
+
+jQuery("#users").navGrid('#users_pager',{edit:false,add:false,del:false,search:false,refresh:true}).navButtonAdd("#users_pager",{caption:"Search",title:"Toggle Search",onClickButton:function(){ 
+	if(jQuery("#t_users").css("display")=="none") {
+		jQuery("#t_users").css("display","");
+	} else {
+		jQuery("#t_users").css("display","none");
+	}
+}
+});
+
+function editUser(id) {
+	window.location = "users/"+id+"/edit";
+};
+
+function rmUser(id) {
+	var usrName = "";
+
+	$("#users tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			usrName = $(this).find("td").eq(1).html();
+		}
+	});
+
+	var txt = "Are you sure you want to delete the user \"" + usrName + "\"?<br \/>The user will be deleted permanently.";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Yes')
+		submitResource("users/post_data", "{'oper':'del','id':'" + id + "'}", "#users");
+	}
+
+	$.prompt(txt,{
+		callback: mycallbackform,
+		buttons: { Yes: 'Yes', No: 'No' }
+	});
+};
+
+function inviteUser() {
+	var userEmail = "";
+
+	var txt = "<table><tr><td>Email<\/td><\/tr><tr><td><input type=\"text\" id=\"userEmail\" name=\"userEmail\"<\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("users/post_data", "{'email':'" + f.userEmail + "','oper':'invite'}", "#users");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.userEmail == "" && v == "Submit"){
+			document.getElementById("userEmail").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+</script>
+

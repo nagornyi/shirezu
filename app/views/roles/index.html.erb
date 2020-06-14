@@ -1,0 +1,17 @@
+<h2>Roles</h2>
+<script type="text/javascript">
+function handleSelection(id) {
+window.location = document.URL+"/"+id+"/edit";
+}
+</script>
+<%=raw jqgrid("Listing roles", "roles", "/roles", 
+[    
+  { :field => "id", :label => "id", :width => 35, :resizable => false },    
+  { :field => "name", :label => "Role name", :editable => true },    
+  ] ,
+{:autowidth=>true, :add => true, :edit => true, :delete => true, :edit_url => "/roles/post_data", :selection_handler => "handleSelection", :multi_selection => false}
+  ) %>
+<p>
+<%= button_to 'New Role', {:controller => :roles, :action => :new}, :class => 'ui-state-default like_button' %>
+<p style="color: green"><%= flash[:notice] %></p>
+

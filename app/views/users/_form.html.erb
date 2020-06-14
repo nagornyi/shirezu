@@ -1,0 +1,54 @@
+<%= form_for(@user) do |f| %>
+  <% if @user.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
+
+      <ul>
+        <% @user.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <div class="field">
+    <% f.label :email %>
+    <%= f.text_field :email, :class => 'glow', :style => "color:#888;", :value => "Email", :onfocus => "inputFocus(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+  <% if @current_method == "new"%>
+	<p/>
+    <div class="field">
+      <% f.label :password %>
+      <%= f.text_field :password, :class => 'glow', :style => "color:#888;", :value => "Password", :onfocus => "inputFocusPassword(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+    </div>
+	<p/>
+    <div class="field">
+      <% f.label :password_confirmation %>
+      <%= f.text_field :password_confirmation, :class => 'glow', :style => "color:#888;", :value => "Password confirmation", :onfocus => "inputFocusPassword(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+    </div>
+  <% end %>
+	<p/>
+  <div class="field">
+    <% f.label :username %>
+    <%= f.text_field :username, :class => 'glow', :style => "color:#888;", :value => "Username", :onfocus => "inputFocus(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+	<div>User's timezone:</div>
+	<%= f.fields_for :profile do |ff| %>
+		<%= ff.time_zone_select('time_zone', TZInfo::Timezone.all, :default => "UTC", :model => TZInfo::Timezone) %>
+	<% end %>
+	<p/>
+	<div>Roles:</div>
+	<table>
+  <% for role in Role.find(:all) %>
+    <tr><td>
+      <%= check_box_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+      <%= role.name %>
+    </tr></td>
+  <% end %>
+	</table>
+<br/>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
+
