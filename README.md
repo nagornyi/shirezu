@@ -1,62 +1,89 @@
-Shirezu is a shared resource management application.
+Shirezu is SHared REsources management application.
 
 Screenshots: https://automatetea.blogspot.com/2012/07/shirezu-resource-management-application.html
 
-The brief description of Shirezu functionality
-1. Shirezu is online dashboard where you can create entries for shared resources and change/track the status of these resources (is it currently Free or Occupied).
-2. Four roles exist: Global Administrator, Company Administrator, Project Administrator and Operator.
-3. The new users can register in the system only by email invitations from existing users. The workflow is the following:
+Brief overview of Shirezu functions
+- Shirezu is online dashboard where you can create entries for shared resources and change/track the status of these resources (is it currently Free or Occupied).
+- Four roles exist: Global Administrator, Company Administrator, Project Administrator and Operator.
+- The new users can register in the system only by email invitations from existing users. The workflow is the following:
+
 a) Global Administrator creates a new Company and invites a Company Administrator.
+
 b) Then the Company Administrator creates a new Project (multiple projects can be created) and invites a Project Administrator.
+
 c) Then the Project Administrator creates new Resources and invites Operators to the project.
+
 d) The exact time when a resource was occupied is displayed on the dashboard, time is automatically converted to your timezone.
+
 e) All users can communicate with each other to discuss the status of any given resource.
 
-== Setup ==
+Setup
+=====
+
+```sh
 gem install bundler
 bundle install
-(install libmysqlclient-dev package from Debian/Ubuntu system repository in case mysql gem cannot compile itself,
-on CentOS it should be sudo yum install mysql-devel)
+# (install libmysqlclient-dev package from Debian/Ubuntu system repository in case mysql gem cannot compile itself, on CentOS it should be sudo yum install mysql-devel)
 bundle exec rake db:create
 bundle exec rake db:migrate
 bundle exec rake db:seed
 rails s
+```
 
-For production:
+## For production:
+
+```sh
 bundle exec rake db:create RAILS_ENV=production
 bundle exec rake db:migrate RAILS_ENV=production
 bundle exec rake db:seed RAILS_ENV=production
+```
 
 To rollback to the given version of db you should execute:
+```sh
 bundle exec rake db:migrate VERSION=0
-(this command will delete all tables in the database)
-or just to remove all db:
+# (this command will delete all tables in the database)
+# or just to remove all db:
 bundle exec rake db:drop
+```
 
 If you have a problem with bundler then add the following to .bashrc:
+```sh
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+```
 
 If you experience a problem with zlib, then do the following:
+```sh
 $ rvm pkg install zlib
 $ rvm reinstall 1.9.2
+```
 
 If you experience a problem with openssl, then do the following:
+```sh
 $ rvm --skip-autoreconf pkg install openssl
 $ rvm reinstall 1.9.2 --with-openssl-dir=$rvm_path/usr
+```
 
 Installation of Apache Passenger module:
+```sh
 passenger-install-apache2-module
+```
 
 On Centos you will also need to install:
+```sh
 sudo yum install libcurl-devel
 sudo yum install httpd-devel
+```
 
 Start/stop passenger standalone:
+```sh
 passenger start -a mydomain.com -p 3000
 passenger start -a mydomain.com -p 3000 -d -e production
 passenger stop -p 3000
+```
 
-== Roles ==
+Roles
+=====
+
 global administrator = only one exists, creates companies, creates and assigns company administrators to companies
 company administrators = created by globaladmin or assigned by other company administrators, creates projects
 administrators = are assigned by company administrators or other administrators to projects, assign administrator or operator role to users
