@@ -1,0 +1,199 @@
+<h2>Companies</h2>
+<script type="text/javascript">
+function refreshData() {
+	$("#companies").trigger("reloadGrid");
+}
+setInterval('refreshData()', 120000);
+</script>
+
+<table id="companies"></table>
+<div id="companies_pager"></div>
+
+<div style="width: 785px; height: 25px; display: none;" class="ui-userdata ui-state-default" id="t_companies">
+<form class="filterform" style="display:inline;'" name="SearchForm">
+<table cellspacing="0" border="0" cellpading="0" class="filtertable">
+<tbody>
+<tr>
+<td><label for="name"></label></td><td><input type="text" value="" id="sg_name" name="name" style="width: 138px;"></td>
+<td><label for="description"></label></td><td><input type="text" value="" id="sg_description" name="description" style="width: 138px;"></td>
+</tr>
+</tbody>
+</table>
+</form>
+</div>
+
+<p>
+<table>
+<tr>
+<td>
+<button class="ui-state-default" onclick="addCompany()" id="addcmp_btn">New Company</button>
+</td>
+</tr>
+</table>
+
+<div class="contextMenu" id="MenuJqGrid_user" style="display:none">
+	<ul style="width: 200px">
+	<li id="edit" style="center">
+	<span style="display:inline-block; width:18px"><img src="images/edit.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Edit</span>
+	</li>
+	<li id="del">
+	<span style="display:inline-block; width:18px"><img src="images/cross.png"/></span>
+	<span style="font-size:11px; font-family:Verdana">Remove</span>
+	</li>
+	<li id="user">
+	<span style="display:inline-block; width:18px"><img src="images/user.png"; width="18"/></span>
+	<span style="font-size:11px; font-family:Verdana">+ Admin</span>
+	</li>
+	</ul>
+</div>
+
+<script type="text/javascript">
+var eventsMenu = { bindings: {
+		'edit': function(t) {
+			editCompany(t.id);
+		},
+		'del': function(t) {
+			rmCompany(t.id);
+		},
+		'user': function(t) {
+			inviteUser(t.id);
+		}
+	}
+};
+
+jQuery("#companies").jqGrid({
+url:'companies',
+datatype: "json",
+height: 250,
+colNames:['Id','Name','Description'],
+colModel:[
+	{name:'id',index:'id', width:10, sorttype:"int", hidden: true},
+	{name:'name',index:'name'},
+	{name:'description',index:'description'}
+],
+autowidth: true, rowNum:10, rowList:[10,20,30], pager: '#companies_pager', sortname: 'name', viewrecords: true, sortorder: "asc",
+caption: "Companies",toolbar : [true,"top"],
+afterInsertRow: function(rowid, rowdata, rowelem) {
+		$('#' + rowid).contextMenu('MenuJqGrid_user', eventsMenu, "#companies", rowid);
+}
+});
+
+jQuery("#t_companies").height(30).hide().filterGrid("companies",{gridModel:true,gridToolbar:true});
+
+jQuery("#companies").navGrid('#companies_pager',{edit:false,add:false,del:false,search:false,refresh:true}).navButtonAdd("#companies_pager",{caption:"Search",title:"Toggle Search",onClickButton:function(){ 
+	if(jQuery("#t_companies").css("display")=="none") {
+		jQuery("#t_companies").css("display","");
+	} else {
+		jQuery("#t_companies").css("display","none");
+	}
+}
+});
+
+function editCompany(id) {
+	var resName = "";
+	var resDesc = "";
+
+	$("#companies tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			resName = $(this).find("td").eq(1).html();
+			resDesc = $(this).find("td").eq(2).html();
+		}
+	});
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("companies/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','oper':'edit','id':'" + id + "'}", "#companies");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function rmCompany(id) {
+	var cmpName = "";
+
+	$("#companies tr").each(function() {
+		if($(this).find("td").eq(0).html() == id) {
+			cmpName = $(this).find("td").eq(1).html();
+		}
+	});
+
+	var txt = "Are you sure you want to delete the company \"" + cmpName + "\"?<br \/>The company will be deleted permanently.";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Yes')
+		submitResource("companies/post_data", "{'oper':'del','id':'" + id + "'}", "#companies");
+	}
+
+	$.prompt(txt,{
+		callback: mycallbackform,
+		buttons: { Yes: 'Yes', No: 'No' }
+	});
+};
+
+function addCompany() {
+	var resName = "";
+	var resDesc = "";
+
+	var txt = "<table><tr><td>Name<\/td><td>Description<\/td><\/tr><tr><td><input type=\"text\" id=\"resName\" name=\"resName\" value=\"" + resName + "\" \/><\/td>" + "<td><input type=\"text\" id=\"resDesc\" name=\"resDesc\" value=\"" + resDesc + "\" \/><\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("companies/post_data", "{'name':'" + f.resName + "','description':'" + f.resDesc + "','oper':'add'}", "#companies");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.resName == "" && v == "Submit"){
+			document.getElementById("resName").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+
+function inviteUser(id) {
+	var userEmail = "";
+
+	var txt = "<table><tr><td>Email<\/td><\/tr><tr><td><input type=\"text\" id=\"userEmail\" name=\"userEmail\"<\/td><\/tr><\/table>";
+
+	function mycallbackform(v,m,f){
+		if(v == 'Submit')
+		submitResource("companies/post_data", "{'email':'" + f.userEmail + "','oper':'invite','id':'" + id + "'}", "#companies");
+	}
+
+	function mysubmitfunc(v,m,f){
+		if(f.userEmail == "" && v == "Submit"){
+			document.getElementById("userEmail").style.border = "solid #ff0000 2px";
+			return false;
+		}
+		return true;
+	}
+
+	$.prompt(txt,{
+		submit: mysubmitfunc,
+		callback: mycallbackform,
+		buttons: { Submit: 'Submit', Cancel: 'Cancel' }
+	});
+};
+</script>
+

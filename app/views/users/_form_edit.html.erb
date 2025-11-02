@@ -1,0 +1,87 @@
+<%= form_for(@user) do |f| %>
+  <% if @user.errors.any? %>
+    <div id="error_explanation" class="warning">
+				<%cnt=1%>
+        <% @user.errors.full_messages.each do |msg| %>
+          <%=cnt.to_s%>.&nbsp;<%cnt=cnt+1%><%=msg%><br/>
+        <% end %>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <% f.label :email %>
+    <%= f.text_field :email, :class => 'glow', :style => "color:#888;", :onfocus => "inputFocusNoClear(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+    <div class="field">
+      <% f.label :password %>
+      <%= f.text_field :password, :class => 'glow', :style => "color:#888;", :value => "Password", :onfocus => "inputFocusPassword(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+    </div>
+	<p/>
+  <div class="field">
+    <% f.label :username %>
+    <%= f.text_field :username, :class => 'glow', :style => "color:#888;", :onfocus => "inputFocusNoClear(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+	<div>User's timezone:</div>
+	<%= f.fields_for :profile do |ff| %>
+		<%= ff.time_zone_select('time_zone', TZInfo::Timezone.all, :default => Profile.find(@user.profile_id).read_attribute(:time_zone).to_s, :model => TZInfo::Timezone) %>
+	<% end %>
+	
+	<p/>
+	
+<% if @current_user.role? :administrator %>
+	<div>Roles:</div>
+	<table>
+  <% for role in Role.find(3, 4) %>
+    <tr><td>
+      <%= radio_button_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+      <%= role.name %>
+    </tr></td>
+  <% end %>
+<% end %>
+
+<% if @current_user.role? :company_administrator %>
+	<% if @user.role? :operator or @user.role? :administrator %>
+		<div>Roles:</div>
+		<table>
+	  <% for role in Role.find(2, 3, 4) %>
+	    <tr><td>
+	      <%= radio_button_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+	      <%= role.name %>
+	    </tr></td>
+	  <% end %>
+	<% end %>	
+<% end %>
+
+<% if @current_user.role? :global_administrator %>
+	<% if @user.role? :operator or @user.role? :administrator %>
+		<div>Roles:</div>
+		<table>
+	  <% for role in Role.find(1, 2, 3, 4) %>
+	    <tr><td>
+	      <%= radio_button_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+	      <%= role.name %>
+	    </tr></td>
+	  <% end %>
+	<% end %>
+	<% if @user.role? :company_administrator %>
+		<div>Roles:</div>
+		<table>
+	  <% for role in Role.find(1, 2) %>
+	    <tr><td>
+	      <%= radio_button_tag "user[role_ids][]", role.id, @user.roles.include?(role) %>
+	      <%= role.name %>
+	    </tr></td>
+	  <% end %>
+	<% end %>
+<% end %>
+
+	</table>
+	
+<br/>
+  <div class="actions">
+    <%= f.submit%>
+  </div>
+<% end %>
+

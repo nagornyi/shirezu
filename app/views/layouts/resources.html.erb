@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>Shirezu</title>
+  <%= javascript_include_tag :defaults %>
+  <%= stylesheet_link_tag 'oxygen' %>
+  <%= csrf_meta_tag %>
+
+	<%= stylesheet_link_tag 'impromptu.css' %>
+	<%= stylesheet_link_tag 'jqgrid/ui.jqgrid.css' %>
+	<%= stylesheet_link_tag 'jqgrid/redmond/jquery-ui-1.8.2.custom.css' %>
+
+	<%= javascript_include_tag 'jquery-impromptu.3.2.min' %>
+	<%= javascript_include_tag 'jqgrid/i18n/grid.locale-en.js' %>
+	<%= javascript_include_tag 'jqgrid/jquery.jqGrid.min.js' %>
+	<%= javascript_include_tag 'jqgrid/jquery.contextmenu.js' %>
+	<%= javascript_include_tag 'jqgrid/grid.custom.js' %>
+	<%= javascript_include_tag 'helpers.js' %>
+</head>
+<body>
+
+<ul id="menu">
+  <li><a href="/resources" title="" class="current">
+    Resources
+  </a></li>
+	<% if @current_user.role? :administrator or @current_user.role? :company_administrator or @current_user.role? :global_administrator%>
+  <li><a href="/users" title="">
+    Users
+  </a></li>
+	<% end %>
+	<% if @current_user.role? :company_administrator or @current_user.role? :global_administrator %>
+  <li><a href="/projects" title="">
+    Projects
+  </a></li>
+	<% end %>
+	<% if @current_user.role? :global_administrator %>
+  <li><a href="/companies" title="">
+    Companies
+  </a></li>
+	<% end %>
+  <div>
+	<% if @current_user.role? :operator%>
+    <span>Welcome, </span> <span id="username"><%="#{current_user.username}"%></span> | Operator at project: <%= Project.find(@current_user.project_id).name %> | <a onclick="editProfile()">Profile</a> | <%= link_to 'Logout', destroy_user_session_path %>
+	<% elsif @current_user.role? :administrator%>
+    <span>Welcome, </span> <span id="username"><%="#{current_user.username}"%></span> | Administrator of project: <%= Project.find(@current_user.project_id).name %> | <a onclick="editProfile()">Profile</a> | <%= link_to 'Logout', destroy_user_session_path %>
+    <% elsif @current_user.role? :company_administrator %>
+    <span>Welcome, </span> <span id="username"><%="#{current_user.username}"%></span> | Administrator of company: <span id="headerCompname"><%= Company.find(@current_user.company_id).name %></span> | <a onclick="editProfileAsCompAdmin()">Profile</a> | <%= link_to 'Logout', destroy_user_session_path %>
+    <% elsif @current_user.role? :global_administrator %>
+    <span>Welcome, </span> <span id="username"><%="#{current_user.username}"%></span> | Global Administrator | <a onclick="editProfile()">Profile</a> | <%= link_to 'Logout', destroy_user_session_path %>
+    <% end %>
+  </div>
+</ul>
+
+<br/>
+<%= yield %>
+<address class="app_version">Shirezu, version 0.5</address>
+
+</body>
+</html>
+

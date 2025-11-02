@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <title>Shirezu</title>
+</head>
+
+<body style="overflow:visible">
+<ul id="menu">
+  <li><a href="/users/sign_in" title="" class="current">
+    Sign up
+  </a></li>
+  <div>
+    <%="Welcome to Shirezu, version 0.5"%>
+  </div>
+</ul>
+<br/>
+<% if !User.find(:all).blank? %>
+<h2>Sign up</h2>
+<div class="info">
+For trial registration please enter "trial" (without quotes) in "Invite code" field below.<br/>
+If you got an email invitation, please enter the invite code that was sent to you.
+</div>
+<% else %>
+<h2>Sign up as Global Administrator</h2>
+<% end %>
+
+<%= form_for(resource, :as => resource_name, :url => registration_path(resource_name)) do |f| %>
+  <% if @user.errors.any? %>
+    <div id="error_explanation" class="warning">
+		<%cnt=1%>
+        <% @user.errors.full_messages.each do |msg| %>
+          <%=cnt.to_s%>.&nbsp;<%cnt=cnt+1%><%=msg%><br/>
+        <% end %>
+    </div>
+  <% end %>
+
+<% if !User.find(:all).blank? %>
+  <div class="field">
+    <% f.label :code %>
+    <%= f.text_field :code, :class => 'glow', :style => "color:#888;", :value => "Invite code", :onfocus => "inputFocus(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+<% end %>
+
+  <div class="field">
+    <% f.label :email %>
+    <%= f.text_field :email, :class => 'glow', :style => "color:#888;", :value => "Email", :onfocus => "inputFocus(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+    <div class="field">
+      <% f.label :password %>
+      <%= f.text_field :password, :class => 'glow', :style => "color:#888;", :value => "Password", :onfocus => "inputFocusPassword(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+    </div>
+	<p/>
+    <div class="field">
+      <% f.label :password_confirmation %>
+      <%= f.text_field :password_confirmation, :class => 'glow', :style => "color:#888;", :value => "Password confirmation", :onfocus => "inputFocusPassword(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+    </div>
+	<p/>
+  <div class="field">
+    <% f.label :username %>
+    <%= f.text_field :username, :class => 'glow', :style => "color:#888;", :value => "Username", :onfocus => "inputFocus(this)", :onblur => "inputBlur(this)", :onmouseover => "inputMouseOver(this)", :onmouseout => "inputMouseOut(this)" %>
+  </div>
+	<p/>
+	<div>User's timezone:</div>
+	<%= f.fields_for :profile do |ff| %>
+		<%= ff.time_zone_select('time_zone', TZInfo::Timezone.all, :default => "UTC", :model => TZInfo::Timezone) %>
+	<% end %>
+	
+<p/>
+<% flash.each do |key, value| %>
+<% if value == 'There was an error with the recaptcha code below. Please re-enter the code.' %>
+    <div class="warning <%= key %>"><%= value %></div>
+<% end %>
+<% end %>
+<%= recaptcha_tags %>
+<p><%= f.submit "Sign up" %></p>
+<% end %>
+
+<% devise_error_messages! %>
+</body>
+
